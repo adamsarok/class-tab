@@ -191,7 +191,10 @@ def main(argv=None):
     parser.add_argument("--db", type=Path, default=ROOT / "classifications.sqlite3")
     parser.add_argument("--prompt", type=Path, default=ROOT / "classification_prompt.txt")
     parser.add_argument("--examples-dir", type=Path, default=ROOT)
-    parser.add_argument("--no-examples", action="store_true", help="Use rubric calibration without full example texts")
+    examples = parser.add_mutually_exclusive_group()
+    examples.add_argument("--examples", action="store_true", help="Include full labeled example texts (default: omitted)")
+    examples.add_argument("--no-examples", dest="examples", action="store_false", help="Omit full example texts (default)")
+    parser.set_defaults(examples=False)
     parser.add_argument("--force", action="store_true", help="Reclassify even if request is unchanged")
     parser.add_argument("--dry-run", action="store_true", help="Print full first request without API calls or DB writes")
     parser.add_argument("--limit", type=int, help="Maximum number of input files")
@@ -219,7 +222,7 @@ def main(argv=None):
     if not args.dry_run and not api_key:
         parser.error("Set OPENROUTER_API_KEY")
     messages = [{"role": "system", "content": args.prompt.read_text(encoding="utf-8")}]
-    if not args.no_examples:
+    if args.examples:
         messages += reference_messages(args.examples_dir)
     base = {"model": args.model, "provider": {"require_parameters": True},
             "response_format": {"type": "json_schema", "json_schema": {

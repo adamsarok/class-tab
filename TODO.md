@@ -1,0 +1,2 @@
+- [ ] Create a small evaluation set: manually label a few dozen varied tabs and compare results whenever you change the prompt or model. 
+- [ ] Add compact examples only for recurring mistakes.

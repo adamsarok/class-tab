@@ -15,7 +15,7 @@ python classify_tabs.py
 Choose an OpenRouter model/endpoint supporting structured outputs. The script sends
 a strict JSON schema and requires provider support, as described in the
 [OpenRouter structured output documentation](https://github.com/OpenRouterTeam/docs/blob/main/guides/features/structured-outputs.mdx).
-API calls send the tab and reference texts to OpenRouter and incur the selected
+API calls send the tab (and reference texts when enabled) to OpenRouter and incur the selected
 model's usage charges. Credentials are read from environment variables; `.env`
 files are not loaded automatically.
 
@@ -29,16 +29,18 @@ python classify_tabs.py tabs --db results.sqlite3
 # Inspect the full first request without calling the API or creating a DB
 python classify_tabs.py --model your-provider/model-id --dry-run
 
-# Reclassify existing results, or omit full example texts to reduce input tokens
+# Reclassify existing results, or opt into full example texts
 python classify_tabs.py --force
-python classify_tabs.py --no-examples
+python classify_tabs.py --examples
 
 # Offline tests
 python -m unittest -v
 ```
 
-The editable rubric is in `classification_prompt.txt`. By default every request
-includes complete labeled texts from `accepted-examples` and `rejected-examples`.
+The editable rubric is in `classification_prompt.txt`. Full example texts are
+omitted by default; the rubric's brief calibration descriptions remain included.
+Use `--examples` to include complete labeled texts from `accepted-examples` and
+`rejected-examples`. `--no-examples` remains supported and explicitly selects the default.
 The names `accepted-tabs` and `rejected-tabs` are also supported and take priority
 when present. `--examples-dir PATH` changes their parent directory. Full examples
 increase token usage; select a context window large enough for examples plus the
