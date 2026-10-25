@@ -19,6 +19,64 @@ def accepted_result():
 
 
 class ClassifierTests(unittest.TestCase):
+    def test_batch_progress_mixed_outcomes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for name in ("a", "b", "c", "d"):
+                (root / f"{name}.txt").write_text("tab")
+            args = [str(root), "--db", str(root / "results.sqlite3"), "--model", "test"]
+            rejected = accepted_result() | {"accepted": False, "quality_ok": False,
+                                            "rejection_reason": "Unreadable rhythm."}
+            output = io.StringIO()
+            with patch.dict(app.os.environ, {"OPENROUTER_API_KEY": "test"}), \
+                    patch.object(app, "classify", return_value=(accepted_result(), {}, "test")) as classify, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(app.main(args + ["--limit", "1"]), 0)
+                classify.side_effect = [(accepted_result(), {}, "test"),
+                                        (rejected, {}, "test"), RuntimeError("Unavailable")]
+                with contextlib.redirect_stdout(output), contextlib.redirect_stderr(io.StringIO()), \
+                        patch.object(app.time, "perf_counter",
+                                     side_effect=[0, 1, 1, 3, 4, 4, 7, 8, 8, 12]):
+                    self.assertEqual(app.main(args), 1)
+            self.assertIn("PROCESS 1/4: a.txt", output.getvalue())
+            self.assertIn("PROGRESS 1/4 (25%): accepted=0, rejected=0, skipped=1, failed=0; "
+                          "elapsed=1.00s, ETA=3.00s", output.getvalue())
+            self.assertIn("PROGRESS 4/4 (100%): accepted=1, rejected=1, skipped=1, failed=1; "
+                          "elapsed=12.00s, ETA=0.00s", output.getvalue())
+            self.assertIn("RUN SUMMARY: 4/4 completed; accepted=1, rejected=1, skipped=1, failed=1",
+                          output.getvalue())
+
+    def test_dry_run_output_remains_json(self):
+        with tempfile.TemporaryDirectory() as directory:
+            tab = Path(directory) / "piece.txt"
+            tab.write_text("tab")
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                self.assertEqual(app.main([str(tab), "--model", "test", "--dry-run"]), 0)
+            self.assertEqual(json.loads(output.getvalue())["model"], "test")
+
+    def test_processing_time_success_skip_and_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tab = root / "piece.txt"
+            tab.write_text("tab")
+            db = root / "results.sqlite3"
+            args = [str(tab), "--db", str(db), "--model", "test"]
+            output = io.StringIO()
+            with patch.dict(app.os.environ, {"OPENROUTER_API_KEY": "test"}), \
+                    patch.object(app, "classify", return_value=(accepted_result(), {}, "test")) as classify, \
+                    patch.object(app.time, "perf_counter", side_effect=[10, 12.5, 12.6, 20, 20.01, 30, 34]), \
+                    contextlib.redirect_stdout(output), contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(app.main(args), 0)
+                self.assertEqual(app.main(args), 0)
+                classify.side_effect = RuntimeError("API unavailable")
+                self.assertEqual(app.main(args + ["--force"]), 1)
+            for duration in ("2.50s", "0.01s", "4.00s"):
+                self.assertIn(f"TIME   piece.txt: {duration}", output.getvalue())
+            with contextlib.closing(sqlite3.connect(db)) as conn:
+                self.assertEqual(conn.execute("SELECT processing_seconds FROM classifications").fetchone(),
+                                 (2.5,))
+
     def test_token_counts(self):
         self.assertEqual(app.token_counts({"prompt_tokens": 120, "completion_tokens": 30}),
                          [120, 30, 150])
@@ -59,8 +117,11 @@ class ClassifierTests(unittest.TestCase):
                 app.save_result(conn, Path("solo.txt"), "tab", "old-request", "test", "test",
                                 accepted_result(), {})
                 conn.execute("ALTER TABLE classifications DROP COLUMN is_solo_guitar")
+                conn.execute("ALTER TABLE classifications DROP COLUMN processing_seconds")
                 conn.commit()
             with contextlib.closing(app.open_db(db)) as conn:
+                self.assertEqual(conn.execute("SELECT processing_seconds FROM classifications").fetchone(),
+                                 (None,))
                 self.assertEqual(conn.execute(
                     "SELECT filename, title, is_solo_guitar FROM classifications").fetchall(),
                     [("solo.txt", "Lagrima", None)])

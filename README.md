@@ -37,6 +37,24 @@ python classify_tabs.py --examples
 python -m unittest -v
 ```
 
+To browse results in a local web frontend:
+
+```powershell
+python web.py
+# Optional: choose another database or port
+python web.py --db results.sqlite3 --port 8080
+```
+
+Open `http://127.0.0.1:8000` (or your chosen port). No extra packages or API key
+are required. The table has search across displayed columns, acceptance and
+difficulty filters, and sortable column headers. Columns include metadata,
+suitability checks, assessment, confidence, processing time, token counts, and
+model details. Use Refresh to load new classifications without restarting.
+Filename links open the original text in a new browser tab, preserving tab
+spacing. Source files must still exist at their stored paths; moved or deleted
+files return a missing-file message. The server binds to localhost and reads the
+database without changing it. Press Ctrl+C to stop.
+
 The editable rubric is in `classification_prompt.txt`. Full example texts are
 omitted by default; the rubric's brief calibration descriptions remain included.
 Use `--examples` to include complete labeled texts from `accepted-examples` and
@@ -74,6 +92,20 @@ Console output shows input, output and total tokens per classification and repor
 totals for the current run. Counts come from OpenRouter's response usage; skipped
 files add no tokens. Missing counts display as unavailable and mark run totals as
 incomplete. Failed calls without a validated response are not included in totals.
+
+Each tab prints `TIME filename: 12.34s`, including failed and skipped inputs.
+Batch output identifies the current file before processing, then reports completed/
+total files, percentage, accepted/rejected/skipped/failed counts, elapsed seconds,
+and an estimated remaining time after each file. ETA uses the average elapsed time
+per completed file, including skips and failures; mixed batches can make it vary.
+A final `RUN SUMMARY` repeats the outcome counts and elapsed time. `--limit` sets
+the batch size when supplied. Progress is omitted for dry runs.
+Successful classifications store `processing_seconds` in SQLite, measured from
+reading the input through response validation, including API retries and waits,
+but excluding the database write. Skips report only the current skip check time
+and preserve the stored classification duration. Dry runs omit timing output.
+Existing databases automatically gain this column; historical durations are null
+until reclassified.
 
 Existing databases automatically gain the `is_solo_guitar` column on the next run.
 Old rows have null in this column until reclassified. The changed prompt/schema

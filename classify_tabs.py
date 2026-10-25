@@ -146,22 +146,27 @@ def open_db(path):
         filename TEXT PRIMARY KEY, source_path TEXT NOT NULL,
         content_sha256 TEXT NOT NULL, request_sha256 TEXT NOT NULL,
         model TEXT NOT NULL, returned_model TEXT NOT NULL, classified_at TEXT NOT NULL,
-        {', '.join(columns)}, result_json TEXT NOT NULL, usage_json TEXT NOT NULL
+        {', '.join(columns)}, result_json TEXT NOT NULL, usage_json TEXT NOT NULL,
+        processing_seconds REAL
     )""")
     existing_columns = {row[1] for row in conn.execute("PRAGMA table_info(classifications)")}
     if "is_solo_guitar" not in existing_columns:
         # Unknown for old results until reclassification; never assume solo guitar.
         conn.execute("ALTER TABLE classifications ADD COLUMN is_solo_guitar INTEGER")
+    if "processing_seconds" not in existing_columns:
+        conn.execute("ALTER TABLE classifications ADD COLUMN processing_seconds REAL")
     conn.commit()
     return conn
 
 
-def save_result(conn, path, text, fingerprint, model, returned_model, result, usage):
+def save_result(conn, path, text, fingerprint, model, returned_model, result, usage,
+                processing_seconds=None):
     row = dict(filename=path.name, source_path=str(path.resolve()),
                content_sha256=hashlib.sha256(text.encode()).hexdigest(),
                request_sha256=fingerprint, model=model, returned_model=returned_model,
                classified_at=datetime.now(timezone.utc).isoformat(), **result,
-               result_json=json.dumps(result, ensure_ascii=False), usage_json=json.dumps(usage))
+               result_json=json.dumps(result, ensure_ascii=False), usage_json=json.dumps(usage),
+               processing_seconds=processing_seconds)
     names = list(row)
     updates = ", ".join(f"{name}=excluded.{name}" for name in names if name != "filename")
     with conn:
@@ -231,8 +236,17 @@ def main(argv=None):
     failed = 0
     totals = [0, 0, 0]
     missing_usage = 0
+    accepted = rejected = skipped = completed = 0
+    batch_started = None
+    batch_elapsed = 0.0
     try:
         for path in selected:
+            started = time.perf_counter()
+            if batch_started is None:
+                batch_started = started
+            if not args.dry_run:
+                print(f"PROCESS {completed + 1}/{len(selected)}: {path.name}", flush=True)
+            processing_seconds = None
             try:
                 text = read_tab(path)
                 payload = dict(base, messages=messages + [{"role": "user", "content": json.dumps({
@@ -243,24 +257,43 @@ def main(argv=None):
                 fingerprint = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
                 existing = conn.execute("SELECT request_sha256 FROM classifications WHERE filename=?", (path.name,)).fetchone()
                 if not args.force and existing and existing[0] == fingerprint:
+                    skipped += 1
                     print(f"SKIP   {path.name} (unchanged)")
                     continue
                 result, usage, returned_model = classify(payload, api_key, args.timeout, args.retries)
+                processing_seconds = time.perf_counter() - started
                 counts = token_counts(usage)
                 for index, count in enumerate(counts):
                     totals[index] += count if count is not None else 0
                 missing_usage += any(count is None for count in counts)
                 print(f"TOKENS {path.name}: {format_tokens(counts)}")
-                save_result(conn, path, text, fingerprint, args.model, returned_model, result, usage)
+                save_result(conn, path, text, fingerprint, args.model, returned_model, result, usage,
+                            processing_seconds)
+                accepted += bool(result['accepted'])
+                rejected += not result['accepted']
                 print(f"{'ACCEPT' if result['accepted'] else 'REJECT'} {path.name}: "
                       f"{result['title'] or '(unknown title)'}"
                       + (f" — {result['rejection_reason']}" if result['rejection_reason'] else ""))
             except (OSError, ValueError, RuntimeError, sqlite3.Error) as exc:
                 failed += 1
                 print(f"ERROR  {path.name}: {exc}", file=sys.stderr)
+            finally:
+                if not args.dry_run:
+                    finished = time.perf_counter()
+                    elapsed = processing_seconds if processing_seconds is not None else finished - started
+                    print(f"TIME   {path.name}: {elapsed:.2f}s")
+                    completed += 1
+                    batch_elapsed = finished - batch_started
+                    eta = batch_elapsed / completed * (len(selected) - completed)
+                    print(f"PROGRESS {completed}/{len(selected)} ({completed / len(selected):.0%}): "
+                          f"accepted={accepted}, rejected={rejected}, skipped={skipped}, failed={failed}; "
+                          f"elapsed={batch_elapsed:.2f}s, ETA={eta:.2f}s", flush=True)
     finally:
         if conn:
             conn.close()
+            print(f"RUN SUMMARY: {completed}/{len(selected)} completed; "
+                  f"accepted={accepted}, rejected={rejected}, skipped={skipped}, failed={failed}; "
+                  f"elapsed={batch_elapsed:.2f}s")
             print(f"RUN TOKENS (reported): {format_tokens(totals)}"
                   + (f"; incomplete usage for {missing_usage} response(s)" if missing_usage else ""))
     return 1 if failed else 0
