@@ -3,6 +3,7 @@ __pycache__/
 *.sqlite3-shm
 *.sqlite3-wal
 .env
+/evaluation/reports/
 
 # Downloaded tablature and local classification references
 /tabs/

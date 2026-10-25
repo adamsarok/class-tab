@@ -1,2 +1,3 @@
-- [ ] Create a small evaluation set: manually label a few dozen varied tabs and compare results whenever you change the prompt or model. 
+- [x] Freeze a 27-case evaluation baseline and add offline/fresh-run comparison with per-rule reporting.
+- [ ] Review remaining draft model labels; resolve Koshkin's disputed musical substance.
 - [ ] Add compact examples only for recurring mistakes.

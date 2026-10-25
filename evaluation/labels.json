@@ -1,0 +1,663 @@
+{
+  "version": 1,
+  "created_at": "2026-10-25T18:38:37.302027+00:00",
+  "description": "Frozen current-classification baseline with user-confirmed completeness and length expectations. Draft model labels measure stability, not independently verified accuracy. Null expectations are unscored. Calibration cases are explicitly named in the current prompt; synthetic cases are reported separately.",
+  "cases": [
+    {
+      "filename": "bach_js_bwv0659_nun_komm_der_heiden_heiland.txt",
+      "content_sha256": "a1ecd75af20b7b22c428b0fb1e86ecee9413129a0e962c601a4b962bb85ae581",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:16:08.323302+00:00",
+        "request_sha256": "c975a064e8c1ac16ee12038c46ce9a79e6074281b7da103259992062e6a6d96e",
+        "assessment": "A complete 34-measure solo-guitar arrangement, ending with a double barline. The four-beat grid and proportional spacing make the note attacks reasonably readable, though exact note durations are not explicit. Its chorale melody and contrapuntal texture have substantial musical content; the technical demands are beyond the target level."
+      }
+    },
+    {
+      "filename": "bach_js_bwv0933_6_little_preludes_1.txt",
+      "content_sha256": "f4079ea81bcb62dc35ceda3a296c75e96dc768d7406b744c489388e4618a51ad",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:01:59.460482+00:00",
+        "request_sha256": "2890b0438bc6b2004e46458be15230bb0997859b9cbe9d42559edd10aa5f295e",
+        "assessment": "Complete 16-measure solo arrangement with repeat markings. The moderate tempo, melodic runs, legato ornaments, independent bass and treble, and brief high-position barre passages make it substantial but within intermediate reach. Meter, tempo, barlines, and proportional note spacing provide a reasonable basis for reconstructing the rhythm."
+      }
+    },
+    {
+      "filename": "beethoven_op113_the_ruins_of_athens_5_marcia_alla_turca.txt",
+      "content_sha256": "97b9e68989222719c4beb311f43793b19b7e88d863489dab565335a0fb7a4acd",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": false,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:16:18.500159+00:00",
+        "request_sha256": "143b1caa41f4793079e977bd563ce49a2a5d092b776aa34a7dff191ee796ccd3",
+        "assessment": "The tab labels four separate Acoustic Guitar parts and provides note values, barlines and repeat instructions for a substantial, apparently complete march. High fret numbers up to 21 and repeated fast runs suggest advanced demands. No composition year or tuning is specified."
+      }
+    },
+    {
+      "filename": "brouwer_nuevos_sencillos_08_omaggio_a_villa-lobos.txt",
+      "content_sha256": "0d28ced710a01523345d73df30acaa5d43b3ee9db082d3bcc7ed82588f6ad31d",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:02:20.782914+00:00",
+        "request_sha256": "1d9b158780a47619b1d1b7f763eaced83f846252e29e704efda53d1252667a2e",
+        "assessment": "Complete solo-guitar study with distinct sections, chordal writing, partial barres, and natural harmonics. The tempo markings, 4/4 meter, barlines, and proportional spacing make the rhythm reasonably readable; its technical demands appear moderate rather than advanced."
+      }
+    },
+    {
+      "filename": "brouwer_nuevos_sencillos_09_omaggio_a_szymanowski.txt",
+      "content_sha256": "d76353579f6371041c05a019136435b0a084d7135bb36af2b40b5657fa8e2a1f",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:02:37.281637+00:00",
+        "request_sha256": "b0ac5c21bfafeab750e32374a0f67fbce5e5cb20bacfff8bd47ca15b38225a4e",
+        "assessment": "Complete, expressive solo-guitar study with 26 unique measures, a lyrical texture, bass-led passages, and a returning section. The slow tempo, first-fret barre, moderate shifts, and occasional pull-offs fit an intermediate level. The first transcription supplies readable beat grids and sustain marks; a second complete solo version is also included. The date-like 1939 in the heading is Brouwer’s birth year, not a composition date."
+      }
+    },
+    {
+      "filename": "espla_levantina_02.txt",
+      "content_sha256": "5502bb7ab012145ffaa29e6e84d7da02fb92872b6e65daaa8e5e33ae81985e13",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": false,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:03:01.507960+00:00",
+        "request_sha256": "541f773782ddc8fdb22681756b80e865851b9f561962013c46979e5d5b4d490b",
+        "assessment": "A complete solo-guitar arrangement of the piano movement is indicated, with measures 1–10 repeated after the contrasting section. The 32 unique measures have coherent melodic and harmonic development, and the moderate tempo, barres, and shifts appear within intermediate reach. Note groupings are shown, but no duration values or clear beat grid make the rhythm uncertain."
+      }
+    },
+    {
+      "filename": "giuliani_op061.txt",
+      "content_sha256": "3ffa722d64b3c60af74756efffc5607c00a4287c7f7c9aa1093feaaa789a055f",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [
+        "is_complete"
+      ],
+      "notes": "User-confirmed complete counterpart. Other expectations remain model-generated drafts. The complete work is advanced, so completeness does not imply acceptance.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T18:35:57.577009+00:00",
+        "request_sha256": "ec92ff4751c6e62083976029efe16a79e5f80523c4312174ca4a1ee531a14edb",
+        "assessment": "A substantial solo-guitar arrangement with marked tempo and meter changes, barlines, and spatially indicated note timing. The extended fast runs and high-fret passages make the playing demands advanced; the exact measure count is difficult to establish from the formatting."
+      },
+      "pair": "giuliani_op061"
+    },
+    {
+      "filename": "giuliani_op061_synth.txt",
+      "content_sha256": "1f5f5ffe9c934370caf85581d06d35d23444e0d855a438deb3bd9adef9229a50",
+      "group": "synthetic",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": false,
+        "length_ok": false,
+        "is_real_piece": true,
+        "is_complete": false,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [
+        "is_complete"
+      ],
+      "notes": "User-confirmed synthetic incomplete excerpt. Other expectations remain model-generated drafts. The complete work is advanced, so completeness does not imply acceptance.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T18:33:10.165978+00:00",
+        "request_sha256": "d4b2a8c63553e07b747313a65162c44b6daaa3b545ca626246695cd6d5dc1d43",
+        "assessment": "The title identifies a substantive solo-guitar work, and the excerpt shows chordal writing, bass notes and a short high-position run. It is far too brief to be a complete rendition, and the dashes and spacing do not establish dependable rhythms."
+      },
+      "pair": "giuliani_op061"
+    },
+    {
+      "filename": "grau_corranda.txt",
+      "content_sha256": "e7acd6c24281c36a1adf7bc6477cb59b4c827aeaf92ecc45349b78972286196b",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": false,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:03:24.267562+00:00",
+        "request_sha256": "57c042ef0393de8146a54a05b2f8f96e245f77eeb1e047faaf5ee35b9b5b74bf",
+        "assessment": "A complete, substantial solo-guitar dance with coherent contrasting sections and roughly 45 unique measures. Notes and fingering are legible, but meter and spacing alone do not establish note durations. The 1929 references concern the dedication/edition and do not explicitly state a composition year."
+      }
+    },
+    {
+      "filename": "hill_p_hill_m_happy_birthday_arr_dyens.txt",
+      "content_sha256": "105f725bc29ba9ccfec9393327d2d12eb62b192f734eff7c36ca881d303f009f",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:03:51.301680+00:00",
+        "request_sha256": "79fd9624b0fd56c1f8fb87169f3239c5623c2b453a1c6f176c8caa240d0cd37b",
+        "assessment": "The tab gives two alternative, complete solo-guitar arrangements; the 17-measure Classique version is counted, without adding the Brésil version. The Brésil version has beat accents, meter, barlines and triplet markings that make its rhythm reasonably reconstructible. Both use independent melody and bass, chord voicings and shifts, with some high-position work and ornaments, but the brief arrangement appears within intermediate range."
+      }
+    },
+    {
+      "filename": "koshkin_da_capo_01_intrada.txt",
+      "content_sha256": "50bf2ceb018bac65293a80ea4c1696c9827a00bb70c421a994683973b7ee7ecc",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": null,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "elementary"
+      },
+      "confirmed_fields": [],
+      "notes": "Disputed musical substance: user intended a mechanical exercise; model found a coherent miniature. is_real_piece is unscored pending review. Other labels remain model-generated drafts; elementary difficulty still implies rejection.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T18:27:26.085122+00:00",
+        "request_sha256": "8ad1fb366a5b33d9961a37bd9ed9c2e0246d094a63de84a34279cd6f729b3ac8",
+        "assessment": "The 16-bar solo miniature has a clear melodic idea, dynamic contrast, and a complete ending. Beat grids, barlines, and held-note marks make the rhythm reasonably readable. Despite its musical coherence, the open-string texture and limited fretting demands place it below the target level."
+      }
+    },
+    {
+      "filename": "kuffner_op168_soixante_lecons_02_pastorale.txt",
+      "content_sha256": "5484f64dda1c922d98fb8c3cdc2583c9ac903031e791b8adc1ffb05308a66fe8",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": false,
+        "accepted": false,
+        "difficulty": "elementary"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:16:32.999465+00:00",
+        "request_sha256": "f7fc3e8c94464f471fea76c9569eb6de38a51844e58bae64a398e92a98857279",
+        "assessment": "The tab gives two simultaneous guitar parts, with readable 3/4 bars, sustain marks and repeat signs. About 16 unique measures form a complete, simple pastorale; its melody and harmonies give it standalone musical substance, but the playing demands are below the target level."
+      }
+    },
+    {
+      "filename": "kuffner_op168_soixante_lecons_04_allegretto.txt",
+      "content_sha256": "3ebcf6631cb9c06a5d80bf83282605d5cc4c8418f025952808d7a1f6894d0b79",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": false,
+        "accepted": false,
+        "difficulty": "elementary"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:04:08.305461+00:00",
+        "request_sha256": "3c78c32426fe4442be942f4daba267f561c00668e7aab5eab1f395e5c655f63b",
+        "assessment": "The complete 24-measure duet has readable notes and a common-time beat grid, with sustained-note markings clarifying durations. Its melody and accompaniment form a coherent musical piece, but the arrangement is for two guitars and the writing is elementary."
+      }
+    },
+    {
+      "filename": "kuffner_op168_soixante_lecons_05_allegretto.txt",
+      "content_sha256": "a8ae83746169ed59fdc68731a2dfdd58bc7cb8a354f2c1ad27cf038a96acc02e",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": false,
+        "accepted": false,
+        "difficulty": "beginner_intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T15:04:14.878513+00:00",
+        "request_sha256": "da8eb45479c470ef1f1909f5642193929c9fb90cf4a172aa2492e1199235b89c",
+        "assessment": "A complete, modestly demanding Allegretto with 24 unique measures; the stated repeat and play order make the form clear. The beat grid, held-note marks, and staccato notation make the rhythm reasonably readable. The two aligned parts require two guitarists."
+      }
+    },
+    {
+      "filename": "lennon-mccartney_here_there_and_everywhere.txt",
+      "content_sha256": "07fb7d0c1a7cec93ba7fad36ccaf7106a51051e30aa9c55c1521cf43c8d0ee8f",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:04:36.366134+00:00",
+        "request_sha256": "6c21f1f524a5d6d5ccbe9adaab64734fc6dafae77970533f87f2730b601710b6",
+        "assessment": "A complete, substantial solo-guitar arrangement with a readable tab layout, 4/4 meter, and expressive tempo and dynamic directions. The high-position chords, barres up to the tenth fret, and frequent shifts make the playing demands advanced. The cited date range refers to the song collection; no composition year is explicitly given."
+      }
+    },
+    {
+      "filename": "mertz_op65_no1_hungarian_fantasy.txt",
+      "content_sha256": "65ae7723bdae5ddf97ae5c1273967d900d92abb71e40c94ea91744f62e1a777a",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:04:49.209237+00:00",
+        "request_sha256": "3edcbac728091b6ecea3f055e345c3525179468cd21017c82f113a3ebcdbded1",
+        "assessment": "A complete, substantial solo-guitar arrangement with readable barlines, meter indications, rhythmic groupings and a legend for ornaments and tuplets. The tab explicitly notes adaptation of some low notes for standard six-string tuning. The 1856 date appears in the heading, but is not explicitly identified as the composition year."
+      }
+    },
+    {
+      "filename": "mertz_schule_fur_die_guitare_ubungsstuck_01.txt",
+      "content_sha256": "ba2769c1da5c84b7329e27b013cc6886ba3601fb336ab3650a7dd834b27005d3",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": false,
+        "is_real_piece": false,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "elementary"
+      },
+      "confirmed_fields": [
+        "length_ok"
+      ],
+      "notes": "User-confirmed too-short example. Other expectations, including is_real_piece=false, remain model-generated drafts.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T18:29:19.820333+00:00",
+        "request_sha256": "9495b17d6cb814e22f7913c4c1530368f50f80050840f9704b4444f6f2ec614d",
+        "assessment": "The tab shows an eight-measure passage ending with a double barline. Beat-grid marks and sustained-note symbols make the basic rhythm reasonably readable, and the arrangement is for solo guitar. The repetitive, rudimentary material is characteristic of an introductory exercise rather than a developed standalone piece."
+      }
+    },
+    {
+      "filename": "parra_gracias_a_la_vida.txt",
+      "content_sha256": "24f0493d07214bb4c7255a688457252019897939e090a3607a34705759dc0c90",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T13:05:09.156025+00:00",
+        "request_sha256": "462c3bfc1ccedf0b577fae5ac65775422202553117d9680c672ee3cb68a8ea3a",
+        "assessment": "Complete, expressive solo arrangement with a singing melody over bass and chordal accompaniment. The 6/8 beat grid, barlines and held-note markings make the rhythm readable. Slow tempo offsets the position shifts, barres and ornaments; these are substantial but appear within intermediate range. The notes identify 1966 as the composition year."
+      }
+    },
+    {
+      "filename": "ponce_suite_in_am_1_preludio.txt",
+      "content_sha256": "14a268eb3d144d9eb4443bec308859f288b5c012b25d435f58cc489690eab7a5",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T13:05:27.606323+00:00",
+        "request_sha256": "0faf4195c45f85e08efd78f588ea41e06804802f83438169454a35bcca2709b4",
+        "assessment": "Complete 54-measure solo prelude with a coherent melodic line, bass support, and chordal passage. The beat grid, spacing, barlines, and meter make the rhythm reasonably reconstructable despite the note about 9/8 phrasing. Scalar runs, slurs, position shifts, and some barres require solid intermediate technique but do not appear to demand sustained advanced virtuosity."
+      }
+    },
+    {
+      "filename": "ponce_suite_in_am_2_allemande.txt",
+      "content_sha256": "491720d11ecb860dadda3d060cd738f5a8681d1e1b8d3a22b748a2031d3a8a0f",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T13:05:41.673897+00:00",
+        "request_sha256": "ef23b3aef7ce5fd5ae94312f9fdf9657966b6084adddcba6d4283a49fb9ecd56",
+        "assessment": "A complete, substantial solo-guitar movement with readable beat-grid tab and a repeat marking. Its frequent high-position shifts, barre work, and quick pull-off and hammer-on figures make the overall technical demand advanced. The header associates 1929 with the suite."
+      }
+    },
+    {
+      "filename": "regondi_ten_etudes_04_adagio_cantabile.txt",
+      "content_sha256": "b9223082b862eb1a19f6029f3bf1afcbccd1c43f4842d4d58f8dd507cd68afa6",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": false,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:16:45.425862+00:00",
+        "request_sha256": "61cce7532e6e131a91930b445bf90b57419cbf3bfbb1025cf56f8a7c42139128",
+        "assessment": "This is a complete, musically substantial solo-guitar etude. The 59 numbered units appear to form the piece, with a D.C. al Fine instruction. The tab shows an expressive melody with bass accompaniment, but the extensive runs and upper-register passages make the playing demands advanced; rhythmic values are not explicitly or consistently indicated."
+      }
+    },
+    {
+      "filename": "robles_el_condor_pasa.txt",
+      "content_sha256": "29e436170cab5422f3ce0f6b39e0fa9bb687f61d874b2b0e20bd9db94f4f7031",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": false,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:17:03.865170+00:00",
+        "request_sha256": "879330a316377487f21181169108a6876687abe050fb1ee2f2dba9a7b117a9ff",
+        "assessment": "The credited Morel arrangement is a substantial solo-guitar version with a closing double bar; the measure labels suggest about 135 measures. Notes and string tuning are readable, but there is no meter or duration notation. High-fret runs and sustained coordination demands make the playing level advanced."
+      }
+    },
+    {
+      "filename": "scarlatti_d_k012.txt",
+      "content_sha256": "c2467af195947f225d09b9e8111d2304707862d5a73c1e9218e9fdc492f5cbf0",
+      "group": "natural",
+      "expected": {
+        "level_ok": false,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": false,
+        "difficulty": "advanced"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T13:05:52.773861+00:00",
+        "request_sha256": "04e08f9edec4221fff176a87a72cf28c739e79f7839188a55ba04005728fe629",
+        "assessment": "The tab presents a complete solo-guitar arrangement with about 49 unique measures. Its beat grid and proportional note spacing make the rhythm reasonably reconstructible; the main limitation is the rapid, technically demanding writing."
+      }
+    },
+    {
+      "filename": "sor_op07_fantaisie_no2_06_variation_4.txt",
+      "content_sha256": "fc480078a43a77d2a084a220b1d9ea06758cc68dce33cf4d8601386b10dd306c",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T14:05:08.755524+00:00",
+        "request_sha256": "4863a9f123a7bb5cec50fb47907275d0076d113191cc97e7d376fa702be07342",
+        "assessment": "A complete, repeat-marked variation of about 16 unique measures, with melodic runs, bass support, and chordal writing. The 2/4 beat grid, barlines, spacing, and held-note marks make the rhythm reasonably reconstructable. Some upper-position chords and quick scale passages require control, but the overall demands appear intermediate. The tab presents a standalone solo-guitar arrangement."
+      }
+    },
+    {
+      "filename": "sor_op60_no19.txt",
+      "content_sha256": "fcea3d5bcdb4fcfd575409d22830c896c0b6e8cf4ba62ccdf062d52384b511da",
+      "group": "natural",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "beginner_intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-24T22:17:11.261549+00:00",
+        "request_sha256": "4874e13350d44233a32358e58f4b734c33b36cb02bb22b9f0b711e68d479e59f",
+        "assessment": "Complete, musically coherent study with 27 unique measures and a specified repeat/ending order. The 6/8 beat grid, barlines, held-note marks, and tempo make the rhythm reasonably reconstructible. Mostly open-position melody and accompaniment with modest fingering demands."
+      }
+    },
+    {
+      "filename": "tarrega_lagrima.txt",
+      "content_sha256": "78223db2e9934c6a4408102e9319057243737cffca0c1e2c3d8af367050e2a93",
+      "group": "calibration",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "beginner_intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T08:43:02.805242+00:00",
+        "request_sha256": "3aa6050cff0a8cd4c02766b0968a6f7e8fcf3edd13c08e49272e06c047348773",
+        "assessment": "Complete, expressive solo-guitar miniature with a contrasting minor section, melodic bass-and-treble writing, and readable 3/4 timing. Several versions are supplied; complete versions provide enough rhythmic spacing and notation to reconstruct the piece. Position shifts and some higher frets are manageable rather than sustained advanced demands. One version is shorter, but the complete versions contain about 16 unique measures."
+      }
+    },
+    {
+      "filename": "zarate_jorge_pequena_suite_3_sarabanda.txt",
+      "content_sha256": "00a3e7401076ba53418a3f5568a4b4793a51d52813931972a436d00954a387bd",
+      "group": "calibration",
+      "expected": {
+        "level_ok": true,
+        "quality_ok": true,
+        "length_ok": true,
+        "is_real_piece": true,
+        "is_complete": true,
+        "is_solo_guitar": true,
+        "accepted": true,
+        "difficulty": "intermediate"
+      },
+      "confirmed_fields": [],
+      "notes": "Draft expectations copied from existing model classification; not manually verified.",
+      "baseline": {
+        "model": "openai/gpt-6-luna",
+        "returned_model": "openai/gpt-6-luna",
+        "classified_at": "2026-10-25T08:43:10.370219+00:00",
+        "request_sha256": "545dfdc5a6044a454d1754aaf038ebea47c5a7d073ed0125a6bf60780cdf92bd",
+        "assessment": "Complete, lyrical solo-guitar movement with a clear 3/4 beat grid, barlines, and duration marks. Its independent melody and bass, phrasing, and dynamic shaping provide musical substance; the fingering and demands appear moderate."
+      }
+    }
+  ]
+}

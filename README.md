@@ -127,6 +127,58 @@ output or a failed call produces an error, continues to the next file, returns a
 nonzero exit code, and preserves any existing successful row. Stored rows therefore
 represent the last successful classification; hashes identify its source version.
 
+Labeled evaluation uses the frozen 27-case set in `evaluation/labels.json`:
+
+```powershell
+# Offline comparison of the current database against the frozen labels
+python evaluate_tabs.py
+
+# Reclassify only the labeled files with the current prompt and chosen model
+# Requires OPENROUTER_API_KEY and incurs normal API charges
+python evaluate_tabs.py --run --model your-provider/model-id
+
+# Compare a different existing database, or retain a named report
+python evaluate_tabs.py --db other-results.sqlite3 --report evaluation/reports/comparison.json
+```
+
+The evaluator reports exact case agreement, per-rule agreement, false accepts and
+false rejects, and label coverage. Natural, prompt-calibration, and synthetic
+cases are summarized separately. Missing files/results, changed source contents,
+invalid responses, and stale classifications are reported as unavailable rather
+than matches. Exit status is 0 for full agreement, 1 for disagreements or
+unavailable cases, and 2 for configuration errors. Reports default to
+`evaluation/reports/latest.json` (overwritten each run, ignored by Git); they
+include individual differences, assessments, model/request provenance, usage,
+and processing durations. Use a different `--report` path to retain each run.
+
+`--run` makes fresh calls in a temporary database and leaves the main database
+and frozen labels unchanged. Failed calls remain missing in the evaluation;
+previous successful results cannot mask them. `--prompt`, `--examples`,
+`--examples-dir`, `--timeout`, and `--retries` configure fresh classification;
+`--tabs-dir` changes the source directory. Full examples are omitted by default,
+as in the classifier. Stored comparisons can contain results from different
+prompts/models; inspect report provenance or use a fresh run for a consistent
+comparison.
+
+Most labels are **model-generated baseline drafts**, so matching them measures
+stability, not independently verified accuracy. The initial offline comparison
+matches by construction. `confirmed_fields` identifies your three explicit
+expectations: Mertz's `length_ok=false`, the original Giuliani's
+`is_complete=true`, and the synthetic Giuliani's `is_complete=false`. The complete
+Giuliani is still rejected for advanced difficulty: completeness is scored
+independently of acceptance. Koshkin's disputed `is_real_piece` expectation is
+null and excluded from scoring; its other draft labels remain scored. Mertz's
+musical-substance rejection is still a draft. Lagrima and Sarabanda are marked
+as calibration cases because the prompt explicitly names them.
+
+Review labels by editing each case's `expected` values and notes, adding reviewed
+fields to `confirmed_fields`. Null means unscored. Keep acceptance consistent
+with the six checks and level suitability consistent with difficulty. Labels
+record hashes of decoded source text; if you intentionally change a tab, review
+its expectations and update its hash rather than silently evaluating different
+content against the old label. Tab files remain local and ignored by Git, so
+another checkout needs the same source files to run this set.
+
 Accepted examples:
 zarate_jorge_pequena_suite_3_sarabanda.txt
 tarrega_lagrima.txt
