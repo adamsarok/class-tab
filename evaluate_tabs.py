@@ -17,6 +17,14 @@ FIELDS = (*classifier.CHECKS, "accepted", "difficulty")
 GROUPS = ("natural", "calibration", "synthetic")
 
 
+def matches_frozen_source(text, expected_digest):
+    # Older labels preserve the source's original newline convention.
+    # Accept either convention without changing the text sent to the classifier.
+    lf = text.replace("\r\n", "\n")
+    return any(hashlib.sha256(candidate.encode()).hexdigest() == expected_digest
+               for candidate in (text, lf, lf.replace("\n", "\r\n")))
+
+
 def load_labels(path):
     document = json.loads(path.read_text(encoding="utf-8"))
     if document.get("version") != 1 or not document.get("cases"):
@@ -101,11 +109,12 @@ def evaluate(document, predictions, tabs_dir):
                 "differences": {}, "actual": None}
         row = predictions.get(label["filename"])
         try:
-            digest = hashlib.sha256(classifier.read_tab(tabs_dir / label["filename"]).encode()).hexdigest()
+            text = classifier.read_tab(tabs_dir / label["filename"])
+            digest = hashlib.sha256(text.encode()).hexdigest()
         except (OSError, UnicodeError):
             case.update(status="missing_source", error="Source tab is missing or unreadable")
         else:
-            if digest != label["content_sha256"]:
+            if not matches_frozen_source(text, label["content_sha256"]):
                 case.update(status="changed_source", error="Source differs from frozen label hash")
             elif row is None:
                 case.update(status="missing_prediction", error="No classification available")
@@ -169,7 +178,9 @@ def main(argv=None):
     parser.add_argument("--tabs-dir", type=Path, default=ROOT / "tabs")
     parser.add_argument("--report", type=Path, default=ROOT / "evaluation/reports/latest.json")
     parser.add_argument("--run", action="store_true", help="Make fresh API calls in an isolated temporary database")
-    parser.add_argument("--model", default=None, help="Model for --run (otherwise OPENROUTER_MODEL)")
+    parser.add_argument("--model", default=None, help="Model for --run (otherwise the selected provider's environment variable)")
+    parser.add_argument("--provider", choices=("openrouter", "strata"), default=None)
+    parser.add_argument("--base-url", help="Strata API base URL for --run")
     parser.add_argument("--prompt", type=Path, default=ROOT / "classification_prompt.txt")
     parser.add_argument("--examples", action="store_true", help="Include full references during --run")
     parser.add_argument("--examples-dir", type=Path, default=ROOT)
@@ -187,8 +198,8 @@ def main(argv=None):
             # Check every frozen input before making the first paid API call.
             for case in document["cases"]:
                 path = args.tabs_dir / case["filename"]
-                digest = hashlib.sha256(classifier.read_tab(path).encode()).hexdigest()
-                if digest != case["content_sha256"]:
+                text = classifier.read_tab(path)
+                if not matches_frozen_source(text, case["content_sha256"]):
                     raise ValueError(f"Source differs from frozen labels: {case['filename']}")
             with tempfile.TemporaryDirectory() as directory:
                 db = Path(directory) / "predictions.sqlite3"
@@ -198,6 +209,10 @@ def main(argv=None):
                             "--examples-dir", str(args.examples_dir)]
                 if args.model:
                     command += ["--model", args.model]
+                if args.provider:
+                    command += ["--provider", args.provider]
+                if args.base_url:
+                    command += ["--base-url", args.base_url]
                 if args.examples:
                     command += ["--examples"]
                 classifier.main(command)

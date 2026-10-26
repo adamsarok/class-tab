@@ -175,33 +175,6 @@
       "pair": "giuliani_op061"
     },
     {
-      "filename": "giuliani_op061_synth.txt",
-      "content_sha256": "1f5f5ffe9c934370caf85581d06d35d23444e0d855a438deb3bd9adef9229a50",
-      "group": "synthetic",
-      "expected": {
-        "level_ok": true,
-        "quality_ok": false,
-        "length_ok": false,
-        "is_real_piece": true,
-        "is_complete": false,
-        "is_solo_guitar": true,
-        "accepted": false,
-        "difficulty": "intermediate"
-      },
-      "confirmed_fields": [
-        "is_complete"
-      ],
-      "notes": "User-confirmed synthetic incomplete excerpt. Other expectations remain model-generated drafts. The complete work is advanced, so completeness does not imply acceptance.",
-      "baseline": {
-        "model": "openai/gpt-6-luna",
-        "returned_model": "openai/gpt-6-luna",
-        "classified_at": "2026-10-25T18:33:10.165978+00:00",
-        "request_sha256": "d4b2a8c63553e07b747313a65162c44b6daaa3b545ca626246695cd6d5dc1d43",
-        "assessment": "The title identifies a substantive solo-guitar work, and the excerpt shows chordal writing, bass notes and a short high-position run. It is far too brief to be a complete rendition, and the dashes and spacing do not establish dependable rhythms."
-      },
-      "pair": "giuliani_op061"
-    },
-    {
       "filename": "grau_corranda.txt",
       "content_sha256": "e7acd6c24281c36a1adf7bc6477cb59b4c827aeaf92ecc45349b78972286196b",
       "group": "natural",

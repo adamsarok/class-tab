@@ -1,7 +1,33 @@
 # Classical guitar tab classifier
 
 Python 3.10+; no third-party packages. Classifies complete `.txt` guitar tabs using
-OpenRouter, then stores results in SQLite with **filename as the primary key**.
+OpenRouter or a local Strata engine, then stores results in SQLite with **filename as the primary key**.
+
+For a running Strata server, select its model ID from `/v1/models`:
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8080/v1/models
+python classify_tabs.py --provider strata --model your-local-model --limit 1
+# Custom server address (include /v1)
+python classify_tabs.py --provider strata --base-url http://127.0.0.1:8399/v1 --model your-local-model
+# Evaluate the local model against the labeled cases
+python evaluate_tabs.py --run --provider strata --model your-local-model
+```
+
+Alternatively set `AI_PROVIDER=strata`, `STRATA_MODEL`, and optionally
+`STRATA_BASE_URL` (default `http://127.0.0.1:8080/v1`). Set `STRATA_API_KEY`
+only if your server requires authentication. The Strata provider never uses
+OpenRouter credentials or routing parameters. Requests go to the configured
+Strata server; there is no cloud fallback. Switching local server URLs triggers
+reclassification even when the model ID is unchanged.
+
+Use a Strata version supporting `response_format` with `json_schema`; see the
+[Strata JSON response format documentation](https://github.com/attentiondotnet/Strata/blob/main/docs/DETAILS.md#json-response-formats).
+All responses are also validated locally against the complete classification
+schema and suitability rules before saving. Increase `--timeout` for slow local
+generation. Start the Strata server separately; these commands connect to it.
+
+OpenRouter remains the default:
 
 PowerShell:
 
@@ -174,7 +200,9 @@ as calibration cases because the prompt explicitly names them.
 Review labels by editing each case's `expected` values and notes, adding reviewed
 fields to `confirmed_fields`. Null means unscored. Keep acceptance consistent
 with the six checks and level suitability consistent with difficulty. Labels
-record hashes of decoded source text; if you intentionally change a tab, review
+record hashes of decoded source text; evaluation accepts LF/CRLF line-ending
+differences, while stored predictions must still match the exact input text.
+If you intentionally change a tab, review
 its expectations and update its hash rather than silently evaluating different
 content against the old label. Tab files remain local and ignored by Git, so
 another checkout needs the same source files to run this set.

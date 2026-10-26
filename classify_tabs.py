@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Classify classical guitar text tabs with OpenRouter and save to SQLite (stdlib only)."""
+"""Classify classical guitar text tabs with OpenRouter or local Strata (stdlib only)."""
 
 import argparse
 import hashlib
@@ -10,7 +10,7 @@ import sqlite3
 import sys
 import time
 from datetime import datetime, timezone
-from urllib import error, request
+from urllib import error, request, parse
 
 ROOT = Path(__file__).resolve().parent
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
@@ -107,11 +107,13 @@ def validate_result(result):
     return result
 
 
-def classify(payload, api_key, timeout=120, retries=2):
+def classify(payload, api_key, timeout=120, retries=2, endpoint=ENDPOINT):
     encoded = json.dumps(payload).encode("utf-8")
     for attempt in range(retries + 1):
-        req = request.Request(ENDPOINT, data=encoded, headers={
-            "Authorization": f"Bearer {api_key}", "Content-Type": "application/json"})
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        req = request.Request(endpoint, data=encoded, headers=headers)
         try:
             with request.urlopen(req, timeout=timeout) as response:
                 envelope = json.load(response)
@@ -123,15 +125,15 @@ def classify(payload, api_key, timeout=120, retries=2):
         except error.HTTPError as exc:
             # Do not print response bodies: authentication errors may contain secrets.
             if exc.code not in (408, 429, 500, 502, 503, 504) or attempt == retries:
-                raise RuntimeError(f"OpenRouter HTTP {exc.code}; check credentials, model support and quota") from None
+                raise RuntimeError(f"Model API HTTP {exc.code}; check server, credentials, model support and quota") from None
             retry_after = exc.headers.get("Retry-After", "")
             delay = min(float(retry_after), 60) if retry_after.isdigit() else 2 ** attempt
         except (error.URLError, TimeoutError) as exc:
             if attempt == retries:
-                raise RuntimeError(f"OpenRouter connection failed ({type(exc).__name__})") from None
+                raise RuntimeError(f"Model API connection failed ({type(exc).__name__})") from None
             delay = 2 ** attempt
         except (KeyError, IndexError, TypeError, ValueError) as exc:
-            raise ValueError(f"Invalid OpenRouter response: {exc}") from None
+            raise ValueError(f"Invalid model API response: {exc}") from None
         time.sleep(delay)
 
 
@@ -192,7 +194,10 @@ def format_tokens(counts):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("paths", nargs="*", type=Path, help="TXT files or directories (default: tabs)")
-    parser.add_argument("--model", default=os.environ.get("OPENROUTER_MODEL"), help="OpenRouter model ID; or OPENROUTER_MODEL")
+    parser.add_argument("--provider", choices=("openrouter", "strata"),
+                        default=os.environ.get("AI_PROVIDER", "openrouter"))
+    parser.add_argument("--base-url", help="Strata API base URL (otherwise STRATA_BASE_URL or http://127.0.0.1:8080/v1)")
+    parser.add_argument("--model", help="Model ID (otherwise OPENROUTER_MODEL or STRATA_MODEL for the selected provider)")
     parser.add_argument("--db", type=Path, default=ROOT / "classifications.sqlite3")
     parser.add_argument("--prompt", type=Path, default=ROOT / "classification_prompt.txt")
     parser.add_argument("--examples-dir", type=Path, default=ROOT)
@@ -206,6 +211,19 @@ def main(argv=None):
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--retries", type=int, default=2)
     args = parser.parse_args(argv)
+    if args.provider not in ("openrouter", "strata"):
+        parser.error("AI_PROVIDER must be openrouter or strata")
+    prefix = args.provider.upper()
+    args.model = args.model or os.environ.get(f"{prefix}_MODEL")
+    endpoint = ENDPOINT
+    if args.provider == "strata":
+        base_url = (args.base_url or os.environ.get("STRATA_BASE_URL") or "http://127.0.0.1:8080/v1").rstrip("/")
+        parsed = parse.urlsplit(base_url)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+            parser.error("Strata base URL must be an HTTP(S) URL without credentials, query or fragment")
+        endpoint = base_url + "/chat/completions"
+    elif args.base_url:
+        parser.error("--base-url is only supported with --provider strata")
     if args.limit is not None and args.limit < 1 or args.timeout <= 0 or args.retries < 0:
         parser.error("limit/timeout must be positive and retries nonnegative")
     files = {}
@@ -222,16 +240,18 @@ def main(argv=None):
     if not selected:
         parser.error("No TXT files found")
     if not args.model:
-        parser.error("Set --model or OPENROUTER_MODEL to a model supporting structured outputs")
-    api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not args.dry_run and not api_key:
+        parser.error(f"Set --model or {prefix}_MODEL to a model supporting structured outputs")
+    api_key = os.environ.get(f"{prefix}_API_KEY")
+    if not args.dry_run and args.provider == "openrouter" and not api_key:
         parser.error("Set OPENROUTER_API_KEY")
     messages = [{"role": "system", "content": args.prompt.read_text(encoding="utf-8")}]
     if args.examples:
         messages += reference_messages(args.examples_dir)
-    base = {"model": args.model, "provider": {"require_parameters": True},
+    base = {"model": args.model,
             "response_format": {"type": "json_schema", "json_schema": {
                 "name": "guitar_tab_classification", "strict": True, "schema": SCHEMA}}}
+    if args.provider == "openrouter":
+        base["provider"] = {"require_parameters": True}
     conn = None if args.dry_run else open_db(args.db)
     failed = 0
     totals = [0, 0, 0]
@@ -254,13 +274,14 @@ def main(argv=None):
                 if args.dry_run:
                     print(json.dumps(payload, ensure_ascii=False, indent=2))
                     break
-                fingerprint = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+                fingerprint_data = payload if args.provider == "openrouter" else {"endpoint": endpoint, "payload": payload}
+                fingerprint = hashlib.sha256(json.dumps(fingerprint_data, sort_keys=True).encode()).hexdigest()
                 existing = conn.execute("SELECT request_sha256 FROM classifications WHERE filename=?", (path.name,)).fetchone()
                 if not args.force and existing and existing[0] == fingerprint:
                     skipped += 1
                     print(f"SKIP   {path.name} (unchanged)")
                     continue
-                result, usage, returned_model = classify(payload, api_key, args.timeout, args.retries)
+                result, usage, returned_model = classify(payload, api_key, args.timeout, args.retries, endpoint=endpoint)
                 processing_seconds = time.perf_counter() - started
                 counts = token_counts(usage)
                 for index, count in enumerate(counts):

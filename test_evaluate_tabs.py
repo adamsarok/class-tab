@@ -43,6 +43,18 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(set(report["cases"][0]["differences"]), {"is_complete", "accepted"})
         self.assertEqual(report["summary"]["fields"]["quality_ok"]["matched"], 1)
 
+    def test_newline_conventions_match_frozen_labels_but_content_changes_do_not(self):
+        for frozen, current in (("tab\nline\n", "tab\r\nline\r\n"),
+                                ("tab\r\nline\r\n", "tab\nline\n")):
+            with self.subTest(frozen=repr(frozen)):
+                self.case["content_sha256"] = hashlib.sha256(frozen.encode()).hexdigest()
+                self.tab.write_bytes(current.encode())
+                row = self.row | {"content_sha256": hashlib.sha256(current.encode()).hexdigest()}
+                self.assertEqual(self.evaluate(row=row)["cases"][0]["status"], "match")
+                self.assertEqual(self.evaluate()["cases"][0]["status"], "stale_prediction")
+                self.tab.write_bytes(current.replace("line", "changed").encode())
+                self.assertEqual(self.evaluate(row=row)["cases"][0]["status"], "changed_source")
+
     def test_false_accept_and_synthetic_group(self):
         self.case["expected"].update(is_complete=False, accepted=False)
         self.case["group"] = "synthetic"

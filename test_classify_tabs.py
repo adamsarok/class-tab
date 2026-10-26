@@ -19,6 +19,59 @@ def accepted_result():
 
 
 class ClassifierTests(unittest.TestCase):
+    def test_response_requires_explanations(self):
+        for name in ("assessment", "rejection_reason"):
+            self.assertIn(name, app.SCHEMA["required"])
+            result = accepted_result()
+            del result[name]
+            with self.assertRaises(ValueError):
+                app.validate_result(result)
+        for changes in ({"assessment": None},
+                        {"accepted": False, "quality_ok": False}):
+            with self.assertRaises(ValueError):
+                app.validate_result(accepted_result() | changes)
+
+    def test_strata_configuration_and_endpoint_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tab = root / "piece.txt"
+            tab.write_text("tab")
+            args = [str(tab), "--db", str(root / "results.sqlite3"), "--provider", "strata"]
+            with patch.dict(app.os.environ, {"STRATA_MODEL": "local-model",
+                                            "OPENROUTER_API_KEY": "cloud-secret"}, clear=True), \
+                    patch.object(app, "classify", return_value=(accepted_result(), {}, "local-model")) as call, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(app.main(args), 0)
+                self.assertEqual(call.call_args.kwargs["endpoint"],
+                                 "http://127.0.0.1:8080/v1/chat/completions")
+                self.assertIsNone(call.call_args.args[1])
+                payload = call.call_args.args[0]
+                self.assertNotIn("provider", payload)
+                self.assertEqual(payload["response_format"]["json_schema"]["schema"], app.SCHEMA)
+                self.assertEqual(app.main(args), 0)
+                self.assertEqual(call.call_count, 1)
+                self.assertEqual(app.main(args + ["--base-url", "http://localhost:8399/v1/"]), 0)
+                self.assertEqual(call.call_count, 2)
+                self.assertEqual(call.call_args.kwargs["endpoint"],
+                                 "http://localhost:8399/v1/chat/completions")
+
+    def test_strata_transport_optional_auth_and_validation(self):
+        endpoint = "http://localhost:8080/v1/chat/completions"
+        for key in (None, "local-secret"):
+            response = io.BytesIO(json.dumps({"choices": [{"finish_reason": "stop", "message": {
+                "content": json.dumps(accepted_result())}}]}).encode())
+            with patch.object(app.request, "urlopen", return_value=response) as call:
+                result, _, model = app.classify({"model": "local"}, key, endpoint=endpoint)
+            req = call.call_args.args[0]
+            self.assertEqual(req.full_url, endpoint)
+            self.assertEqual(req.get_header("Authorization"), f"Bearer {key}" if key else None)
+            self.assertTrue(result["accepted"])
+            self.assertEqual(model, "local")
+        response = io.BytesIO(json.dumps({"choices": [{"finish_reason": "stop", "message": {
+            "content": "{}"}}]}).encode())
+        with patch.object(app.request, "urlopen", return_value=response), self.assertRaises(ValueError):
+            app.classify({"model": "local"}, None, endpoint=endpoint)
+
     def test_batch_progress_mixed_outcomes(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
