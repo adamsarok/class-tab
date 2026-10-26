@@ -254,7 +254,7 @@
         "level_ok": false,
         "quality_ok": true,
         "length_ok": true,
-        "is_real_piece": true,
+        "is_real_piece": false,
         "is_complete": true,
         "is_solo_guitar": false,
         "accepted": false,
@@ -268,54 +268,6 @@
         "classified_at": "2026-10-24T22:16:32.999465+00:00",
         "request_sha256": "f7fc3e8c94464f471fea76c9569eb6de38a51844e58bae64a398e92a98857279",
         "assessment": "The tab gives two simultaneous guitar parts, with readable 3/4 bars, sustain marks and repeat signs. About 16 unique measures form a complete, simple pastorale; its melody and harmonies give it standalone musical substance, but the playing demands are below the target level."
-      }
-    },
-    {
-      "filename": "kuffner_op168_soixante_lecons_04_allegretto.txt",
-      "content_sha256": "3ebcf6631cb9c06a5d80bf83282605d5cc4c8418f025952808d7a1f6894d0b79",
-      "group": "natural",
-      "expected": {
-        "level_ok": false,
-        "quality_ok": true,
-        "length_ok": true,
-        "is_real_piece": true,
-        "is_complete": true,
-        "is_solo_guitar": false,
-        "accepted": false,
-        "difficulty": "elementary"
-      },
-      "confirmed_fields": [],
-      "notes": "Draft expectations copied from existing model classification; not manually verified.",
-      "baseline": {
-        "model": "openai/gpt-6-luna",
-        "returned_model": "openai/gpt-6-luna",
-        "classified_at": "2026-10-25T14:04:08.305461+00:00",
-        "request_sha256": "3c78c32426fe4442be942f4daba267f561c00668e7aab5eab1f395e5c655f63b",
-        "assessment": "The complete 24-measure duet has readable notes and a common-time beat grid, with sustained-note markings clarifying durations. Its melody and accompaniment form a coherent musical piece, but the arrangement is for two guitars and the writing is elementary."
-      }
-    },
-    {
-      "filename": "kuffner_op168_soixante_lecons_05_allegretto.txt",
-      "content_sha256": "a8ae83746169ed59fdc68731a2dfdd58bc7cb8a354f2c1ad27cf038a96acc02e",
-      "group": "natural",
-      "expected": {
-        "level_ok": true,
-        "quality_ok": true,
-        "length_ok": true,
-        "is_real_piece": true,
-        "is_complete": true,
-        "is_solo_guitar": false,
-        "accepted": false,
-        "difficulty": "beginner_intermediate"
-      },
-      "confirmed_fields": [],
-      "notes": "Draft expectations copied from existing model classification; not manually verified.",
-      "baseline": {
-        "model": "openai/gpt-6-luna",
-        "returned_model": "openai/gpt-6-luna",
-        "classified_at": "2026-10-25T15:04:14.878513+00:00",
-        "request_sha256": "da8eb45479c470ef1f1909f5642193929c9fb90cf4a172aa2492e1199235b89c",
-        "assessment": "A complete, modestly demanding Allegretto with 24 unique measures; the stated repeat and play order make the form clear. The beat grid, held-note marks, and staccato notation make the rhythm reasonably readable. The two aligned parts require two guitarists."
       }
     },
     {

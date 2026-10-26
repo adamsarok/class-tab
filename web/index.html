@@ -7,6 +7,7 @@
 <style>
 :root{font-family:system-ui,sans-serif;color:#24332e;background:#f5f6f2;color-scheme:light}*{box-sizing:border-box}body{margin:0;padding:32px}main{max-width:1800px;margin:auto}h1{font-family:Georgia,serif;font-weight:normal;font-size:38px;margin:8px 0}p{color:#58665e}.eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;color:#56715e}.toolbar{display:flex;gap:16px;align-items:end;flex-wrap:wrap;margin:28px 0 16px}label{display:grid;gap:7px;font-size:13px;font-weight:600}.search{flex:1;min-width:220px}input,select,button{font:inherit;border:1px solid #bcc9be;border-radius:6px;background:white;padding:10px;color:inherit}button{cursor:pointer}button:hover{background:#edf3eb}a{color:#21674c;text-underline-offset:3px}a:hover{color:#113e2d}.table-wrap{overflow:auto;max-height:72vh;border:1px solid #d4dcd2;border-radius:8px;background:white}table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px}th{position:sticky;top:0;background:#eaf0e7;text-align:left;z-index:1;white-space:nowrap;border-bottom:1px solid #d4dcd2}th button{border:0;background:transparent;padding:13px;font-weight:600;width:100%;text-align:left;border-radius:0}td{padding:12px 13px;border-bottom:1px solid #e8ece6;vertical-align:top;min-width:100px;max-width:360px;overflow-wrap:anywhere}td:first-child{min-width:280px}tr:hover td{background:#f8faf6}.badge{display:inline-block;border-radius:20px;padding:3px 9px;background:#e3f1e5;color:#245b31;white-space:nowrap}.rejected{background:#f9ebe3;color:#88452b}.muted{color:#7c857f}.long{min-width:260px}#message{padding:24px;text-align:center}#status{font-size:14px;min-height:22px}button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #609577;outline-offset:2px}@media(max-width:600px){body{padding:18px}h1{font-size:30px}.toolbar label{width:100%}}
 </style>
+<style>.stars{display:flex;white-space:nowrap;gap:2px}.stars button{padding:2px;border:0;background:transparent;font-size:23px;color:#7c857f}.stars button.selected{color:#a66d08}.stars button:hover{background:#fff3d7}.stars button:disabled{cursor:wait}.stars .clear-rating{font-size:12px;margin-left:6px}td:has(.stars){min-width:195px}</style>
 </head>
 <body><main>
 <div class="eyebrow">Classical guitar</div>
@@ -16,6 +17,7 @@
 <label class="search">Search all columns<input id="search" type="search" placeholder="Filename, composer, title, assessment…"></label>
 <label>Acceptance<select id="acceptance"><option value="">All results</option><option value="1">Accepted</option><option value="0">Rejected</option><option value="unknown">Unknown</option></select></label>
 <label>Difficulty<select id="difficulty"><option value="">All levels</option></select></label>
+<label>Rating<select id="rating"><option value="">All ratings</option><option value="unrated">Unrated</option><option value="1">★ · 1 star</option><option value="2">★★ · 2 stars</option><option value="3">★★★ · 3 stars</option><option value="4">★★★★ · 4 stars</option><option value="5">★★★★★ · 5 stars</option></select></label>
 <button id="reset" type="button">Clear filters</button><button id="refresh" type="button">Refresh</button>
 </div>
 <p id="status" role="status" aria-live="polite">Loading classifications…</p>
@@ -24,31 +26,39 @@
 <script>
 const columns = [
  ['filename','File'],['accepted','Accepted'],['title','Title'],['author','Composer'],
- ['difficulty','Difficulty'],['processing_seconds','Processing (s)'],['confidence','Confidence'],
- ['input_tokens','Input tokens'],['output_tokens','Output tokens'],['total_tokens','Total tokens'],
+ ['rating','Your rating'],['difficulty','Difficulty'],
  ['year','Year'],['arranger','Arranger'],['catalogue','Catalogue'],['key_signature','Key'],
  ['time_signature','Meter'],['tuning','Tuning'],['estimated_measures','Measures'],
  ['level_ok','Level OK'],['quality_ok','Quality OK'],['length_ok','Length OK'],
  ['is_real_piece','Musical substance'],['is_complete','Complete'],['is_solo_guitar','Solo guitar'],
- ['rejection_reason','Rejection reason'],['assessment','Assessment'],['model','Requested model'],
- ['returned_model','Returned model'],['classified_at','Classified at (UTC)'],['source_path','Source path']
+ ['rejection_reason','Rejection reason'],['assessment','Assessment']
 ];
 const bools=new Set(['accepted','level_ok','quality_ok','length_ok','is_real_piece','is_complete','is_solo_guitar']);
 const $=id=>document.getElementById(id);
 let data=[], sortKey='filename', direction=1;
-function display(row,key){const v=row[key];if(v==null)return '—';if(bools.has(key))return v?'Yes':'No';if(key==='processing_seconds')return Number(v).toFixed(2);if(key==='confidence')return `${Math.round(v*100)}%`;return String(v);}
+function display(row,key){const v=row[key];if(v==null)return '—';if(bools.has(key))return v?'Yes':'No';return String(v);}
+function ratingControl(row){
+ const group=document.createElement('div');group.className='stars';group.setAttribute('role','group');group.setAttribute('aria-label','Your rating for '+row.filename);
+ for(let value=1;value<=5;value++){const button=document.createElement('button');button.type='button';button.textContent=value<=(row.rating||0)?'★':'☆';button.className=value<=(row.rating||0)?'selected':'';button.title=`Rate ${value} of 5 stars`;button.setAttribute('aria-label',button.title);button.setAttribute('aria-pressed',String(row.rating===value));button.onclick=()=>saveRating(row,value,group);group.append(button);}
+ const clear=document.createElement('button');clear.type='button';clear.className='clear-rating';clear.textContent='Clear';clear.disabled=row.rating==null;clear.setAttribute('aria-label','Clear rating');clear.onclick=()=>saveRating(row,null,group);group.append(clear);return group;
+}
+async function saveRating(row,rating,group){
+ for(const button of group.children)button.disabled=true;
+ try{const response=await fetch('/api/rating',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename:row.filename,rating})});if(!response.ok)throw new Error(await response.text());row.rating=(await response.json()).rating;render();$('status').textContent=`Rating ${rating==null?'cleared':'saved'} for ${row.filename}.`;}
+ catch(error){group.replaceWith(ratingControl(row));$('status').textContent='Could not save rating. '+error.message;}
+}
 for(const [key,label] of columns){const th=document.createElement('th');th.scope='col';const b=document.createElement('button');b.textContent=label;b.type='button';b.onclick=()=>{direction=sortKey===key?-direction:1;sortKey=key;render();};th.append(b);th.dataset.key=key;$('head').append(th);}
 function render(){
- const query=$('search').value.trim().toLowerCase(), acceptance=$('acceptance').value, difficulty=$('difficulty').value;
- const rows=data.filter(r=>(!query||columns.some(([k])=>display(r,k).toLowerCase().includes(query)))&&(!acceptance||(acceptance==='unknown'?r.accepted==null:String(r.accepted)===acceptance))&&(!difficulty||r.difficulty===difficulty));
+ const query=$('search').value.trim().toLowerCase(), acceptance=$('acceptance').value, difficulty=$('difficulty').value, rating=$('rating').value;
+ const rows=data.filter(r=>(!query||columns.some(([k])=>display(r,k).toLowerCase().includes(query)))&&(!acceptance||(acceptance==='unknown'?r.accepted==null:String(r.accepted)===acceptance))&&(!difficulty||r.difficulty===difficulty)&&(!rating||(rating==='unrated'?r.rating==null:String(r.rating)===rating)));
  rows.sort((a,b)=>{const x=a[sortKey],y=b[sortKey];if(x==null)return y==null?0:1;if(y==null)return -1;return direction*(typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y),undefined,{numeric:true,sensitivity:'base'}));});
  $('rows').replaceChildren();const fragment=document.createDocumentFragment();
- for(const row of rows){const tr=document.createElement('tr');for(const [key] of columns){const td=document.createElement('td');if(key==='filename'){const a=document.createElement('a');a.href='/tabs/'+encodeURIComponent(row.filename);a.target='_blank';a.rel='noopener noreferrer';a.textContent=row.filename;td.append(a);}else if(key==='accepted'&&row[key]!=null){const span=document.createElement('span');span.className='badge'+(row[key]?'':' rejected');span.textContent=row[key]?'Accepted':'Rejected';td.append(span);}else{td.textContent=display(row,key);if(row[key]==null)td.className='muted';if(['assessment','rejection_reason','source_path'].includes(key))td.classList.add('long');}tr.append(td);}fragment.append(tr);}
+ for(const row of rows){const tr=document.createElement('tr');for(const [key] of columns){const td=document.createElement('td');if(key==='filename'){const a=document.createElement('a');a.href='/tabs/'+encodeURIComponent(row.filename);a.target='_blank';a.rel='noopener noreferrer';a.textContent=row.filename;td.append(a);}else if(key==='rating'){td.append(ratingControl(row));}else if(key==='accepted'&&row[key]!=null){const span=document.createElement('span');span.className='badge'+(row[key]?'':' rejected');span.textContent=row[key]?'Accepted':'Rejected';td.append(span);}else{td.textContent=display(row,key);if(row[key]==null)td.className='muted';if(['assessment','rejection_reason','source_path'].includes(key))td.classList.add('long');}tr.append(td);}fragment.append(tr);}
  $('rows').append(fragment);$('status').textContent=`${rows.length} of ${data.length} tabs · ${data.filter(r=>r.accepted===1).length} accepted · ${data.filter(r=>r.accepted===0).length} rejected`;
  $('message').hidden=rows.length>0;$('message').textContent=data.length?'No tabs match your filters.':'No classifications yet. Run the classifier, then refresh.';
  for(const th of $('head').children){th.setAttribute('aria-sort',th.dataset.key===sortKey?(direction===1?'ascending':'descending'):'none');th.firstChild.textContent=columns.find(([k])=>k===th.dataset.key)[1]+(th.dataset.key===sortKey?(direction===1?' ↑':' ↓'):'');}
 }
 async function load(){ $('refresh').disabled=true;$('status').textContent='Loading classifications…';try{const response=await fetch('/api/tabs');if(!response.ok)throw new Error(await response.text());const incoming=await response.json();data=incoming;const selected=$('difficulty').value;$('difficulty').replaceChildren(new Option('All levels',''));for(const level of [...new Set(data.map(r=>r.difficulty).filter(Boolean))].sort())$('difficulty').add(new Option(level.replaceAll('_',' '),level));$('difficulty').value=selected;render();}catch(error){$('status').textContent='Could not load classifications. '+error.message;}finally{$('refresh').disabled=false;}}
-$('search').addEventListener('input',render);for(const id of ['acceptance','difficulty'])$(id).addEventListener('change',render);
-$('reset').onclick=()=>{for(const id of ['search','acceptance','difficulty'])$(id).value='';render();};$('refresh').onclick=load;load();
+$('search').addEventListener('input',render);for(const id of ['acceptance','difficulty','rating'])$(id).addEventListener('change',render);
+$('reset').onclick=()=>{for(const id of ['search','acceptance','difficulty','rating'])$(id).value='';render();};$('refresh').onclick=load;load();
 </script></body></html>

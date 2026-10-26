@@ -27,14 +27,16 @@ All responses are also validated locally against the complete classification
 schema and suitability rules before saving. Increase `--timeout` for slow local
 generation. Start the Strata server separately; these commands connect to it.
 
-Reasoning is disabled by default for both providers. Use `--reasoning` to enable
-it, or `--no-reasoning` to explicitly disable it, on either `classify_tabs.py` or
-`evaluate_tabs.py --run`. Strata receives `reasoning_effort: "none"` (enabled:
-`"high"`), following its [thinking controls](https://github.com/attentiondotnet/Strata/blob/main/docs/DETAILS.md#using-it).
-OpenRouter receives `reasoning: {"enabled": false}` (enabled: `true`), following its
-[reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+Reasoning controls are omitted by default for both providers, leaving the model's
+default behavior in effect. On either `classify_tabs.py` or `evaluate_tabs.py --run`,
+use `--reasoning disabled`, `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, or
+`max` to explicitly choose an effort. `disabled` is an alias for `none`.
+OpenRouter receives `reasoning: {"effort": "LEVEL"}` according to its
+[reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens);
+Strata receives `reasoning_effort: "LEVEL"`. Supported levels depend on the
+model and server. Explicit settings are never removed automatically on HTTP 400.
 The setting is included in the request fingerprint, so changing it triggers
-reclassification. Models must support disabling reasoning to honor this setting.
+reclassification.
 
 OpenRouter remains the default:
 
@@ -82,13 +84,15 @@ python web.py --db results.sqlite3 --port 8080
 
 Open `http://127.0.0.1:8000` (or your chosen port). No extra packages or API key
 are required. The table has search across displayed columns, acceptance and
-difficulty filters, and sortable column headers. Columns include metadata,
-suitability checks, assessment, confidence, processing time, token counts, and
-model details. Use Refresh to load new classifications without restarting.
+difficulty filters, and sortable column headers. Columns include musical metadata,
+suitability checks, assessment, and your editable five-star rating. Click a star
+to save a rating or Clear to remove it. Ratings persist in a separate database
+table across reclassification. Technical fields remain stored for the classifier
+but are omitted from the library. Use Refresh to load new classifications.
 Filename links open the original text in a new browser tab, preserving tab
 spacing. Source files must still exist at their stored paths; moved or deleted
-files return a missing-file message. The server binds to localhost and reads the
-database without changing it. Press Ctrl+C to stop.
+files return a missing-file message. The server binds to localhost and needs write
+access to the database to store your ratings. Press Ctrl+C to stop.
 
 The editable rubric is in `classification_prompt.txt`. Full example texts are
 omitted by default. Add `--debug` to `classify_tabs.py` or `evaluate_tabs.py --run`
@@ -162,7 +166,15 @@ FROM classifications WHERE accepted = 1 ORDER BY author, title;
 
 Successful classifications commit after each file. Identical requests are skipped;
 changing the tab, prompt, examples, schema or model triggers reclassification.
-`--force` overrides skipping. Duplicate basenames across input directories are
+Use `--ignore-request-hash` to reuse existing results when the tab text is
+unchanged, even if the model, endpoint, reasoning, prompt, or other request settings
+changed. New or edited tabs are still classified. For example:
+
+```powershell
+python classify_tabs.py --provider strata --model qwen3.8-flash-next-iq3_s --timeout 600 --reasoning disabled --ignore-request-hash
+```
+
+`--force` overrides both skipping modes. Duplicate basenames across input directories are
 rejected before API calls to avoid key collisions. A changed file updates its row.
 Transient connection/rate/server errors retry with bounded waits. Invalid model
 output or a failed call produces an error, continues to the next file, returns a

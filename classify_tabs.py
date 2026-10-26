@@ -14,6 +14,7 @@ from urllib import error, request, parse
 
 ROOT = Path(__file__).resolve().parent
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+REASONING_LEVELS = ("disabled", "none", "minimal", "low", "medium", "high", "xhigh", "max")
 
 
 def field(kind, description, nullable=False, **extra):
@@ -273,10 +274,12 @@ def main(argv=None):
     examples.add_argument("--no-examples", dest="examples", action="store_false", help="Omit full example texts (default)")
     parser.set_defaults(examples=False)
     parser.add_argument("--force", action="store_true", help="Reclassify even if request is unchanged")
+    parser.add_argument("--ignore-request-hash", action="store_true",
+                        help="Reuse existing classifications when tab text is unchanged, regardless of request settings")
     parser.add_argument("--dry-run", action="store_true", help="Print full first request without API calls or DB writes")
     parser.add_argument("--debug", action="store_true", help="Stream response chunks, including reasoning, to stderr")
-    parser.add_argument("--reasoning", action=argparse.BooleanOptionalAction, default=False,
-                        help="Enable model reasoning (default: disabled)")
+    parser.add_argument("--reasoning", choices=REASONING_LEVELS,
+                        help="Reasoning effort (default: omit reasoning controls)")
     parser.add_argument("--limit", type=int, help="Maximum number of input files")
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--retries", type=int, default=2)
@@ -322,9 +325,12 @@ def main(argv=None):
                 "name": "guitar_tab_classification", "strict": True, "schema": SCHEMA}}}
     if args.provider == "openrouter":
         base["provider"] = {"require_parameters": True}
-        base["reasoning"] = {"enabled": args.reasoning}
-    else:
-        base["reasoning_effort"] = "high" if args.reasoning else "none"
+    if args.reasoning is not None:
+        effort = "none" if args.reasoning == "disabled" else args.reasoning
+        if args.provider == "openrouter":
+            base["reasoning"] = {"effort": effort}
+        else:
+            base["reasoning_effort"] = effort
     conn = None if args.dry_run else open_db(args.db)
     failed = 0
     totals = [0, 0, 0]
@@ -349,8 +355,10 @@ def main(argv=None):
                     break
                 fingerprint_data = payload if args.provider == "openrouter" else {"endpoint": endpoint, "payload": payload}
                 fingerprint = hashlib.sha256(json.dumps(fingerprint_data, sort_keys=True).encode()).hexdigest()
-                existing = conn.execute("SELECT request_sha256 FROM classifications WHERE filename=?", (path.name,)).fetchone()
-                if not args.force and existing and existing[0] == fingerprint:
+                existing = conn.execute("SELECT request_sha256, content_sha256 FROM classifications WHERE filename=?", (path.name,)).fetchone()
+                unchanged = existing and (existing[1] == hashlib.sha256(text.encode()).hexdigest()
+                                          if args.ignore_request_hash else existing[0] == fingerprint)
+                if not args.force and unchanged:
                     skipped += 1
                     print(f"SKIP   {path.name} (unchanged)")
                     continue

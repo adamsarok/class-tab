@@ -19,24 +19,47 @@ def accepted_result():
 
 
 class ClassifierTests(unittest.TestCase):
-    def test_reasoning_defaults_off_and_can_be_enabled_or_disabled(self):
+    def test_ignore_request_hash_reuses_unchanged_text_but_force_and_edits_rerun(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            tab = root / "piece.txt"
+            tab.write_text("original tab")
+            args = [str(tab), "--db", str(root / "results.sqlite3"),
+                    "--provider", "strata", "--model", "first"]
+            with patch.object(app, "classify", return_value=(accepted_result(), {}, "returned")) as call, \
+                    contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(app.main(args), 0)
+                changed = args + ["--model", "second", "--reasoning", "disabled",
+                                  "--ignore-request-hash"]
+                self.assertEqual(app.main(changed), 0)
+                self.assertEqual(call.call_count, 1)
+                self.assertEqual(app.main(changed + ["--force"]), 0)
+                self.assertEqual(call.call_count, 2)
+                tab.write_text("edited tab")
+                self.assertEqual(app.main(changed), 0)
+                self.assertEqual(call.call_count, 3)
+
+    def test_reasoning_is_omitted_by_default_and_explicit_levels_are_mapped(self):
         with tempfile.TemporaryDirectory() as directory:
             tab = Path(directory) / "piece.txt"
             tab.write_text("tab")
             for provider in ("strata", "openrouter"):
-                for flags, enabled in (([], False), (["--reasoning"], True),
-                                       (["--no-reasoning"], False)):
+                for level in (None, *app.REASONING_LEVELS):
+                    flags = [] if level is None else ["--reasoning", level]
                     with self.subTest(provider=provider, flags=flags):
                         output = io.StringIO()
                         with contextlib.redirect_stdout(output):
                             self.assertEqual(app.main([str(tab), "--provider", provider,
                                                        "--model", "test", "--dry-run"] + flags), 0)
                         payload = json.loads(output.getvalue())
-                        if provider == "strata":
-                            self.assertEqual(payload["reasoning_effort"], "high" if enabled else "none")
+                        if level is None:
+                            self.assertNotIn("reasoning", payload)
+                            self.assertNotIn("reasoning_effort", payload)
+                        elif provider == "strata":
+                            self.assertEqual(payload["reasoning_effort"], "none" if level == "disabled" else level)
                             self.assertNotIn("reasoning", payload)
                         else:
-                            self.assertEqual(payload["reasoning"], {"enabled": enabled})
+                            self.assertEqual(payload["reasoning"], {"effort": "none" if level == "disabled" else level})
                             self.assertNotIn("reasoning_effort", payload)
 
     def test_debug_stream_reassembles_content_and_usage(self):

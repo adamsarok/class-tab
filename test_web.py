@@ -7,7 +7,7 @@ import tempfile
 import threading
 import unittest
 from urllib.error import HTTPError
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 
 import classify_tabs as app
 from test_classify_tabs import accepted_result
@@ -61,7 +61,31 @@ class WebTests(unittest.TestCase):
                     with urlopen(base + "/api/tabs") as response:
                         rows = json.load(response)
                         self.assertEqual(rows[0]["filename"], tab.name)
-                        self.assertEqual(rows[0]["processing_seconds"], 2.5)
+                        self.assertIsNone(rows[0]["rating"])
+                        for field in ("processing_seconds", "confidence", "usage_json", "model", "source_path", "request_sha256", "input_tokens"):
+                            self.assertNotIn(field, rows[0])
+                    def rate(value, filename=tab.name):
+                        return urlopen(Request(base + "/api/rating", data=json.dumps(
+                            {"filename": filename, "rating": value}).encode(),
+                            headers={"Content-Type": "application/json"}))
+                    with rate(4) as response:
+                        self.assertEqual(json.load(response), {"rating": 4})
+                    with contextlib.closing(app.open_db(db)) as conn:
+                        app.save_result(conn, tab, app.read_tab(tab), "new hash", "other", "other",
+                                        accepted_result(), {}, 1)
+                    with urlopen(base + "/api/tabs") as response:
+                        self.assertEqual(json.load(response)[0]["rating"], 4)
+                    for value in (0, 6, True, "5", 2.5):
+                        with self.subTest(rating=value), self.assertRaises(HTTPError) as error:
+                            rate(value)
+                        self.assertEqual(error.exception.code, 400)
+                    with self.assertRaises(HTTPError) as error:
+                        rate(5, "missing.txt")
+                    self.assertEqual(error.exception.code, 404)
+                    with rate(None) as response:
+                        self.assertEqual(json.load(response), {"rating": None})
+                    with urlopen(base + "/api/tabs") as response:
+                        self.assertIsNone(json.load(response)[0]["rating"])
                     with urlopen(base + "/tabs/piece%20%231.txt") as response:
                         self.assertEqual(response.headers.get_content_type(), "text/plain")
                         self.assertEqual(response.read().decode(), app.read_tab(tab))
