@@ -19,6 +19,62 @@ def accepted_result():
 
 
 class ClassifierTests(unittest.TestCase):
+    def test_reasoning_defaults_off_and_can_be_enabled_or_disabled(self):
+        with tempfile.TemporaryDirectory() as directory:
+            tab = Path(directory) / "piece.txt"
+            tab.write_text("tab")
+            for provider in ("strata", "openrouter"):
+                for flags, enabled in (([], False), (["--reasoning"], True),
+                                       (["--no-reasoning"], False)):
+                    with self.subTest(provider=provider, flags=flags):
+                        output = io.StringIO()
+                        with contextlib.redirect_stdout(output):
+                            self.assertEqual(app.main([str(tab), "--provider", provider,
+                                                       "--model", "test", "--dry-run"] + flags), 0)
+                        payload = json.loads(output.getvalue())
+                        if provider == "strata":
+                            self.assertEqual(payload["reasoning_effort"], "high" if enabled else "none")
+                            self.assertNotIn("reasoning", payload)
+                        else:
+                            self.assertEqual(payload["reasoning"], {"enabled": enabled})
+                            self.assertNotIn("reasoning_effort", payload)
+
+    def test_debug_stream_reassembles_content_and_usage(self):
+        content = json.dumps(accepted_result(), ensure_ascii=False)
+        events = [
+            {"model": "returned", "choices": [{"index": 0, "delta": {"reasoning": "Checking voices"}}]},
+            {"choices": [{"index": 0, "delta": {"content": content[:80]}}]},
+            {"choices": [{"index": 0, "delta": {"content": content[80:]}, "finish_reason": "stop"}]},
+            {"choices": [], "usage": {"prompt_tokens": 100, "completion_tokens": 20}},
+        ]
+        response = io.BytesIO((": heartbeat\n\n" + "".join(
+            "data: " + json.dumps(event) + "\n\n" for event in events)
+            + "data: [DONE]\n\n").encode())
+        response.headers = {"Content-Type": "text/event-stream; charset=utf-8"}
+        output = io.StringIO()
+        payload = {"model": "test"}
+        with patch.object(app.request, "urlopen", return_value=response) as call, \
+                contextlib.redirect_stderr(output):
+            result, usage, model = app.classify(payload, "secret", debug=True)
+        self.assertEqual(result, accepted_result())
+        self.assertEqual(usage, {"prompt_tokens": 100, "completion_tokens": 20})
+        self.assertEqual(model, "returned")
+        sent = json.loads(call.call_args.args[0].data)
+        self.assertTrue(sent["stream"])
+        self.assertEqual(sent["stream_options"], {"include_usage": True})
+        self.assertNotIn("stream", payload)
+        self.assertEqual(output.getvalue(), "Checking voices" + content + "\n")
+        self.assertNotIn("secret", output.getvalue())
+
+    def test_debug_stream_rejects_error_and_missing_finish(self):
+        for event in ({"error": {"message": "failure"}},
+                      {"choices": [{"delta": {"content": json.dumps(accepted_result())}}]}):
+            response = io.BytesIO(("data: " + json.dumps(event) + "\n\n").encode())
+            response.headers = {"Content-Type": "text/event-stream"}
+            with patch.object(app.request, "urlopen", return_value=response), \
+                    contextlib.redirect_stderr(io.StringIO()), self.assertRaises(ValueError):
+                app.classify({"model": "test"}, None, debug=True)
+
     def test_response_requires_explanations(self):
         for name in ("assessment", "rejection_reason"):
             self.assertIn(name, app.SCHEMA["required"])

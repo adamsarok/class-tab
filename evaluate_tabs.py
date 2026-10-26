@@ -186,6 +186,9 @@ def main(argv=None):
     parser.add_argument("--examples-dir", type=Path, default=ROOT)
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--retries", type=int, default=2)
+    parser.add_argument("--debug", action="store_true", help="Stream model response chunks during --run")
+    parser.add_argument("--reasoning", action=argparse.BooleanOptionalAction, default=False,
+                        help="Enable model reasoning during --run (default: disabled)")
     args = parser.parse_args(argv)
     try:
         document = load_labels(args.labels)
@@ -215,6 +218,9 @@ def main(argv=None):
                     command += ["--base-url", args.base_url]
                 if args.examples:
                     command += ["--examples"]
+                if args.debug:
+                    command += ["--debug"]
+                command += ["--reasoning" if args.reasoning else "--no-reasoning"]
                 classifier.main(command)
                 predictions = read_predictions(db)
         else:

@@ -27,6 +27,15 @@ All responses are also validated locally against the complete classification
 schema and suitability rules before saving. Increase `--timeout` for slow local
 generation. Start the Strata server separately; these commands connect to it.
 
+Reasoning is disabled by default for both providers. Use `--reasoning` to enable
+it, or `--no-reasoning` to explicitly disable it, on either `classify_tabs.py` or
+`evaluate_tabs.py --run`. Strata receives `reasoning_effort: "none"` (enabled:
+`"high"`), following its [thinking controls](https://github.com/attentiondotnet/Strata/blob/main/docs/DETAILS.md#using-it).
+OpenRouter receives `reasoning: {"enabled": false}` (enabled: `true`), following its
+[reasoning controls](https://openrouter.ai/docs/guides/best-practices/reasoning-tokens).
+The setting is included in the request fingerprint, so changing it triggers
+reclassification. Models must support disabling reasoning to honor this setting.
+
 OpenRouter remains the default:
 
 PowerShell:
@@ -82,7 +91,11 @@ files return a missing-file message. The server binds to localhost and reads the
 database without changing it. Press Ctrl+C to stop.
 
 The editable rubric is in `classification_prompt.txt`. Full example texts are
-omitted by default; the rubric's brief calibration descriptions remain included.
+omitted by default. Add `--debug` to `classify_tabs.py` or `evaluate_tabs.py --run`
+to stream generated text (including exposed reasoning) continuously to stderr,
+without event metadata or extra newlines between chunks. A newline ends each response.
+Servers that ignore streaming print the output text once the response is complete.
+The rubric's brief calibration descriptions remain included.
 Use `--examples` to include complete labeled texts from `accepted-examples` and
 `rejected-examples`. `--no-examples` remains supported and explicitly selects the default.
 The names `accepted-tabs` and `rejected-tabs` are also supported and take priority
@@ -104,6 +117,9 @@ despite its short form and position changes. Missing conventional staff notation
 is acceptable if ASCII spacing, meter and duration marks make rhythm readable.
 These are subjective LLM estimates; review the assessment and confidence when
 deciding on borderline pieces.
+The rubric defines difficulty levels by performance demands and requires concrete
+musical evidence. Readability, length and completeness are evaluated separately
+from difficulty; they do not automatically raise the playing level.
 
 The `classifications` table includes title, author (composer), composition year,
 arranger, catalogue, key, meter, tuning, estimated unique measures, difficulty,

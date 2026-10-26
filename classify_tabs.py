@@ -107,7 +107,65 @@ def validate_result(result):
     return result
 
 
-def classify(payload, api_key, timeout=120, retries=2, endpoint=ENDPOINT):
+def write_debug_text(delta):
+    """Write only generated text, without adding separators between chunks."""
+    reasoning = delta.get("reasoning") or delta.get("reasoning_content")
+    if not reasoning:
+        reasoning = "".join(detail.get("text", "") for detail in
+                            delta.get("reasoning_details", []) if isinstance(detail, dict))
+    for text in (reasoning, delta.get("content")):
+        if isinstance(text, str) and text:
+            print(text, end="", file=sys.stderr, flush=True)
+
+
+def read_debug_stream(response, model):
+    """Display generated text immediately and rebuild the completion envelope."""
+    content = []
+    usage = {}
+    finish_reason = None
+    event_lines = []
+
+    def consume(lines):
+        nonlocal model, usage, finish_reason
+        data = "\n".join(line[5:].lstrip(" ") for line in lines if line.startswith("data:"))
+        if not data or data == "[DONE]":
+            return data == "[DONE]"
+        event = json.loads(data)
+        if event.get("error"):
+            raise ValueError("Model API reported an error in the stream")
+        model = event.get("model") or model
+        if event.get("usage") is not None:
+            usage = event["usage"]
+        for choice in event.get("choices", []):
+            if choice.get("index", 0) != 0:
+                continue
+            delta = choice.get("delta", {})
+            write_debug_text(delta)
+            if delta.get("content"):
+                content.append(delta["content"])
+            if choice.get("finish_reason") is not None:
+                finish_reason = choice["finish_reason"]
+        return False
+
+    for raw_line in response:
+        line = raw_line.decode("utf-8").rstrip("\r\n")
+        if line:
+            event_lines.append(line)
+        else:
+            if consume(event_lines):
+                break
+            event_lines = []
+    else:
+        if event_lines:
+            consume(event_lines)
+    return {"choices": [{"finish_reason": finish_reason,
+                         "message": {"content": "".join(content)}}],
+            "usage": usage, "model": model}
+
+
+def classify(payload, api_key, timeout=120, retries=2, endpoint=ENDPOINT, debug=False):
+    if debug:
+        payload = dict(payload, stream=True, stream_options={"include_usage": True})
     encoded = json.dumps(payload).encode("utf-8")
     for attempt in range(retries + 1):
         headers = {"Content-Type": "application/json"}
@@ -116,7 +174,16 @@ def classify(payload, api_key, timeout=120, retries=2, endpoint=ENDPOINT):
         req = request.Request(endpoint, data=encoded, headers=headers)
         try:
             with request.urlopen(req, timeout=timeout) as response:
-                envelope = json.load(response)
+                if debug and "text/event-stream" in response.headers.get("Content-Type", "").lower():
+                    try:
+                        envelope = read_debug_stream(response, payload["model"])
+                    finally:
+                        print(file=sys.stderr, flush=True)
+                else:
+                    envelope = json.load(response)
+                    if debug:
+                        write_debug_text(envelope["choices"][0]["message"])
+                        print(file=sys.stderr, flush=True)
             choice = envelope["choices"][0]
             if choice.get("finish_reason") != "stop":
                 raise ValueError(f"Incomplete/refused response: {choice.get('finish_reason')}")
@@ -207,6 +274,9 @@ def main(argv=None):
     parser.set_defaults(examples=False)
     parser.add_argument("--force", action="store_true", help="Reclassify even if request is unchanged")
     parser.add_argument("--dry-run", action="store_true", help="Print full first request without API calls or DB writes")
+    parser.add_argument("--debug", action="store_true", help="Stream response chunks, including reasoning, to stderr")
+    parser.add_argument("--reasoning", action=argparse.BooleanOptionalAction, default=False,
+                        help="Enable model reasoning (default: disabled)")
     parser.add_argument("--limit", type=int, help="Maximum number of input files")
     parser.add_argument("--timeout", type=float, default=120)
     parser.add_argument("--retries", type=int, default=2)
@@ -252,6 +322,9 @@ def main(argv=None):
                 "name": "guitar_tab_classification", "strict": True, "schema": SCHEMA}}}
     if args.provider == "openrouter":
         base["provider"] = {"require_parameters": True}
+        base["reasoning"] = {"enabled": args.reasoning}
+    else:
+        base["reasoning_effort"] = "high" if args.reasoning else "none"
     conn = None if args.dry_run else open_db(args.db)
     failed = 0
     totals = [0, 0, 0]
@@ -281,7 +354,8 @@ def main(argv=None):
                     skipped += 1
                     print(f"SKIP   {path.name} (unchanged)")
                     continue
-                result, usage, returned_model = classify(payload, api_key, args.timeout, args.retries, endpoint=endpoint)
+                result, usage, returned_model = classify(payload, api_key, args.timeout, args.retries,
+                                                        endpoint=endpoint, debug=args.debug)
                 processing_seconds = time.perf_counter() - started
                 counts = token_counts(usage)
                 for index, count in enumerate(counts):
