@@ -153,7 +153,8 @@ output or a failed call produces an error, continues to the next file, returns a
 nonzero exit code, and preserves any existing successful row. Stored rows therefore
 represent the last successful classification; hashes identify its source version.
 
-Labeled evaluation uses the frozen 27-case set in `evaluation/labels.json`:
+Labeled evaluation defaults to the compact frozen 7-case set in
+`evaluation/labels.json`:
 
 ```powershell
 # Offline comparison of the current database against the frozen labels
@@ -165,6 +166,9 @@ python evaluate_tabs.py --run --model your-provider/model-id
 
 # Compare a different existing database, or retain a named report
 python evaluate_tabs.py --db other-results.sqlite3 --report evaluation/reports/comparison.json
+
+# Optional broader comparison using the archived 26-case baseline
+python evaluate_tabs.py --labels evaluation/labels-full.json
 ```
 
 The evaluator reports exact case agreement, per-rule agreement, false accepts and
@@ -188,14 +192,18 @@ comparison.
 
 Most labels are **model-generated baseline drafts**, so matching them measures
 stability, not independently verified accuracy. The initial offline comparison
-matches by construction. `confirmed_fields` identifies your three explicit
-expectations: Mertz's `length_ok=false`, the original Giuliani's
-`is_complete=true`, and the synthetic Giuliani's `is_complete=false`. The complete
+matches by construction. `confirmed_fields` identifies your two explicit
+expectations retained in the compact set: Mertz's `length_ok=false` and the
+original Giuliani's `is_complete=true`. The complete
 Giuliani is still rejected for advanced difficulty: completeness is scored
-independently of acceptance. Koshkin's disputed `is_real_piece` expectation is
-null and excluded from scoring; its other draft labels remain scored. Mertz's
-musical-substance rejection is still a draft. Lagrima and Sarabanda are marked
-as calibration cases because the prompt explicitly names them.
+independently of acceptance. Mertz's musical-substance rejection is still a
+draft. The other compact cases cover unreadable rhythm (Espla), a required
+second guitarist (Kuffner), an accepted expressive study (Brouwer), an accepted
+beginner-intermediate study (Sor), and prompt calibration (Sarabanda).
+Redundant cases remain in `evaluation/labels-full.json`; that archive also
+includes Koshkin's disputed, unscored `is_real_piece` expectation and Lagrima's
+calibration case. Neither set includes the unavailable synthetic Giuliani;
+incomplete-source rejection currently has no evaluation coverage.
 
 Review labels by editing each case's `expected` values and notes, adding reviewed
 fields to `confirmed_fields`. Null means unscored. Keep acceptance consistent
