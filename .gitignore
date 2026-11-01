@@ -11,3 +11,5 @@ __pycache__/
 /rejected-examples/
 /accepted-tabs/
 /rejected-tabs/
+
+/.vs/
